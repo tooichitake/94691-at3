@@ -1,0 +1,37 @@
+# Data
+data/raw/
+data/interim/
+data/processed/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+.jupyter/
+
+# Outputs / checkpoints
+outputs/
+*.pt
+*.pth
+*.ckpt
+
+# IDE / tooling
+.vscode/
+.idea/
+.claude/
+
+# Assignment prompt (kept out of repo to avoid republishing the instructor's text)
+assignment_requirements.txt
+plan.md
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
