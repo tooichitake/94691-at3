@@ -1,0 +1,48 @@
+seed: 2026
+
+paths:
+  annotations: data/raw/annotations/annotations.json
+  images_dir:  data/raw/images
+  processed:   data/processed
+
+text:
+  # Tier 0: SentencePiece BPE subword tokenizer (Kudo & Richardson EMNLP 2018).
+  tokenizer: spm_bpe                            # "spm_bpe" is the only supported value
+  vocab_size: 8000                              # SubICap WACV 2021 captioning-scale sweet spot
+  character_coverage: 1.0
+  max_caption_len: 50                           # excludes <start>/<end>; stored length = 52
+  special_tokens: ["<pad>", "<start>", "<end>", "<unk>"]
+  special_ids: {pad: 0, start: 1, end: 2, unk: 3}
+  drop_flags: ["is_rejected", "is_precanned"]
+
+image:
+  # Three presets, each matched to a specific backbone family. Augmentation
+  # (BLIP recipe: RandomResizedCrop + HFlip + RandAugment) is applied
+  # uniformly when build_transform(..., train=True), independent of preset —
+  # so there is no separate "_train" preset; the same name covers both modes.
+  default_transform: "imagenet_224_center"
+  presets:
+    imagenet_224_center:                       # ResNet / ViT (ImageNet-pretrained encoders)
+      resize_shortest: 256
+      crop: 224
+      mean: [0.485, 0.456, 0.406]
+      std:  [0.229, 0.224, 0.225]
+    clip_224:                                  # OpenAI CLIP stats (valid for CLIP ViT-B/16 and ViT-B/32)
+      resize_shortest: 224
+      crop: 224
+      mean: [0.48145466, 0.4578275, 0.40821073]
+      std:  [0.26862954, 0.26130258, 0.27577711]
+    minimal_224:                               # SmallCNN trained from scratch — no ImageNet stats
+      resize_shortest: 224
+      crop: 224
+      mean: null
+      std:  null
+
+split:
+  train: 0.8
+  val:   0.1
+  test:  0.1
+
+loader:
+  batch_size: 32
+  num_workers: 0                               # Windows-safe default
