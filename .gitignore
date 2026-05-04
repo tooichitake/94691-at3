@@ -16,7 +16,8 @@ __pycache__/
 .jupyter/
 
 # Outputs / checkpoints
-outputs/
+!outputs/
+!outputs/**
 *.pt
 *.pth
 *.ckpt
