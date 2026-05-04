@@ -1,0 +1,50 @@
+data:
+  data_config: configs/data_config.yaml
+  transform_preset: imagenet_224_center
+eval:
+  beam_size: 5
+  length_penalty: 1.0
+  max_gen_len: 52
+grpo:
+  clip_eps: 0.2
+  clip_norm: 1.0
+  enabled: true
+  epochs: 5
+  group_size: 5
+  kl_beta: 0.04
+  lr: 1.0e-05
+  reward: cider
+  weight_decay: 0.0
+model:
+  decoder:
+    d_ff: 2048
+    d_model: 512
+    dropout: 0.1
+    max_len: 52
+    n_heads: 8
+    n_layers: 4
+    name: transformer
+  encoder:
+    freeze: true
+    name: vit_b16
+    pretrained: true
+    unfreeze_last_transformer_layers: 3
+run_name: s3_m2_vit_transformer
+training:
+  amp: true
+  batch_size: 32
+  betas:
+  - 0.9
+  - 0.98
+  clip_norm: 1.0
+  early_stop_patience: false
+  encoder_lr_decay: 0.65
+  encoder_lr_scale: 0.1
+  epochs: 20
+  label_smoothing: 0.1
+  lr: 0.0001
+  monitor: cider
+  optimizer: adamw
+  scheduler: cosine
+  warmup_steps: 1000
+  weight_decay: 0.01
