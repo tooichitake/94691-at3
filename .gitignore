@@ -1,6 +1,8 @@
 # Data
-data/raw/
-data/interim/
+data/raw/*
+!data/raw/.gitkeep
+data/interim/*
+!data/interim/.gitkeep
 
 # Python
 __pycache__/
