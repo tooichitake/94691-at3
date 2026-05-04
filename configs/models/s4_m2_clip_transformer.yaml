@@ -1,0 +1,53 @@
+run_name: s4_m2_clip_transformer
+
+data:
+  data_config: configs/data_config.yaml
+  transform_preset: clip_224
+
+model:
+  encoder:
+    name: clip_vision
+    pretrained: openai/clip-vit-base-patch16
+    freeze: true
+    unfreeze_last_transformer_layers: 2
+  decoder:
+    name: transformer
+    n_layers: 4
+    n_heads: 8
+    d_model: 512
+    d_ff: 2048
+    dropout: 0.1
+    max_len: 52
+
+training:
+  batch_size: 32
+  epochs: 20
+  optimizer: adamw
+  lr: 1.0e-4
+  betas: [0.9, 0.98]
+  weight_decay: 0.01
+  warmup_steps: 1000
+  encoder_lr_scale: 0.05
+  encoder_lr_decay: 0.65
+  scheduler: cosine
+  clip_norm: 1.0
+  label_smoothing: 0.1
+  amp: true
+  early_stop_patience: false
+  monitor: cider
+
+eval:
+  beam_size: 5
+  max_gen_len: 52
+  length_penalty: 1.0
+
+grpo:
+  enabled: true
+  epochs: 5
+  lr: 1.0e-5
+  weight_decay: 0.0
+  group_size: 5
+  clip_eps: 0.2
+  kl_beta: 0.04
+  clip_norm: 1.0
+  reward: cider
