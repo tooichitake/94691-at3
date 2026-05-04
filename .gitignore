@@ -1,7 +1,6 @@
 # Data
 data/raw/
 data/interim/
-data/processed/
 
 # Python
 __pycache__/
