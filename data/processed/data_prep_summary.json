@@ -1,0 +1,40 @@
+{
+  "seed": 2026,
+  "tokenizer": "spm_bpe",
+  "vocab_size": 8000,
+  "character_coverage": 1.0,
+  "max_caption_len": 50,
+  "stored_seq_length": 52,
+  "drop_flags": [
+    "is_rejected",
+    "is_precanned"
+  ],
+  "counts": {
+    "raw_images": 7750,
+    "raw_annotations": 38750,
+    "kept_annotations": 33145,
+    "surviving_images": 7542,
+    "split": {
+      "train_images": 6034,
+      "val_images": 754,
+      "test_images": 754,
+      "train_captions": 26519,
+      "val_captions": 3311,
+      "test_captions": 3315
+    }
+  },
+  "special_tokens": {
+    "pad": 0,
+    "start": 1,
+    "end": 2,
+    "unk": 3
+  },
+  "vocab_model_file": "spm_bpe_8000.model",
+  "default_transform": "imagenet_224_center",
+  "available_transforms": [
+    "imagenet_224_center",
+    "clip_224",
+    "minimal_224"
+  ],
+  "config_sha1": "57f4233b0526db917a93ae3a01733d93a064eedf"
+}

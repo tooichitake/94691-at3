@@ -1,0 +1,17 @@
+{
+  "tokenizer": "spm_bpe",
+  "vocab_size": 8000,
+  "model_type": "bpe",
+  "character_coverage": 1.0,
+  "specials": [
+    "<pad>",
+    "<start>",
+    "<end>",
+    "<unk>"
+  ],
+  "pad_id": 0,
+  "start_id": 1,
+  "end_id": 2,
+  "unk_id": 3,
+  "model_file": "spm_bpe_8000.model"
+}
