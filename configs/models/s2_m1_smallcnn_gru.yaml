@@ -1,31 +1,29 @@
-run_name: s2_m1_vit_gru
+run_name: s2_m1_smallcnn_gru
 
 data:
   data_config: configs/data_config.yaml
-  transform_preset: imagenet_224_center
+  transform_preset: minimal_224
 
 model:
   encoder:
-    name: vit_b16
-    pretrained: true
-    freeze: true
-    unfreeze_last_transformer_layers: 3
+    name: small_cnn
+    pretrained: false
+    freeze: false
+    out_dim: 256
   decoder:
     name: gru
-    embed_dim: 512
-    hidden_dim: 512
+    embed_dim: 256
+    hidden_dim: 256
     n_layers: 1
     dropout: 0.3
 
 training:
   batch_size: 64
-  epochs: 12                             # reduced from 20
+  epochs: 20
   optimizer: adamw
   lr: 4.0e-4
   betas: [0.9, 0.999]
   weight_decay: 1.0e-4
-  encoder_lr_scale: 0.1
-  encoder_lr_decay: 0.65
   scheduler: plateau
   clip_norm: 5.0
   label_smoothing: 0.1
@@ -40,7 +38,7 @@ eval:
 
 grpo:
   enabled: true
-  epochs: 3                              # reduced from 5
+  epochs: 5
   lr: 5.0e-5
   weight_decay: 0.0
   group_size: 5

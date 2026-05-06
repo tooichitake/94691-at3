@@ -1,0 +1,51 @@
+run_name: s2_m2_resnet_gru_luong
+
+data:
+  data_config: configs/data_config.yaml
+  transform_preset: imagenet_224_center
+
+model:
+  encoder:
+    name: resnet50
+    pretrained: true
+    freeze: true
+    unfreeze_last_bottlenecks: 3
+  decoder:
+    name: gru_attn
+    attention: luong
+    embed_dim: 512
+    hidden_dim: 512
+    n_layers: 1
+    dropout: 0.3
+
+training:
+  batch_size: 64
+  epochs: 20
+  optimizer: adamw
+  lr: 4.0e-4
+  betas: [0.9, 0.999]
+  weight_decay: 1.0e-4
+  encoder_lr_scale: 0.1
+  encoder_lr_decay: 0.65
+  scheduler: plateau
+  clip_norm: 5.0
+  label_smoothing: 0.1
+  amp: true
+  early_stop_patience: false
+  monitor: cider
+
+eval:
+  beam_size: 5
+  max_gen_len: 52
+  length_penalty: 1.0
+
+grpo:
+  enabled: true
+  epochs: 5
+  lr: 5.0e-5
+  weight_decay: 0.0
+  group_size: 5
+  clip_eps: 0.2
+  kl_beta: 0.04
+  clip_norm: 1.0
+  reward: cider
