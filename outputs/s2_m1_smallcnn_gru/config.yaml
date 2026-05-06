@@ -1,0 +1,45 @@
+data:
+  data_config: configs/data_config.yaml
+  transform_preset: minimal_224
+eval:
+  beam_size: 5
+  length_penalty: 1.0
+  max_gen_len: 52
+grpo:
+  clip_eps: 0.2
+  clip_norm: 1.0
+  enabled: true
+  epochs: 5
+  group_size: 5
+  kl_beta: 0.04
+  lr: 5.0e-05
+  reward: cider
+  weight_decay: 0.0
+model:
+  decoder:
+    dropout: 0.3
+    embed_dim: 256
+    hidden_dim: 256
+    n_layers: 1
+    name: gru
+  encoder:
+    freeze: false
+    name: small_cnn
+    out_dim: 256
+    pretrained: false
+run_name: s2_m1_smallcnn_gru
+training:
+  amp: true
+  batch_size: 64
+  betas:
+  - 0.9
+  - 0.999
+  clip_norm: 5.0
+  early_stop_patience: false
+  epochs: 20
+  label_smoothing: 0.1
+  lr: 0.0004
+  monitor: cider
+  optimizer: adamw
+  scheduler: plateau
+  weight_decay: 0.0001
