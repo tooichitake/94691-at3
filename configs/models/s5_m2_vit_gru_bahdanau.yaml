@@ -1,49 +1,52 @@
+run_name: s5_m2_vit_gru_bahdanau
+
 data:
   data_config: configs/data_config.yaml
   transform_preset: imagenet_224_center
-eval:
-  beam_size: 5
-  length_penalty: 1.0
-  max_gen_len: 52
-grpo:
-  clip_eps: 0.2
-  clip_norm: 1.0
-  enabled: true
-  epochs: 5
-  group_size: 5
-  kl_beta: 0.04
-  lr: 5.0e-05
-  reward: cider
-  weight_decay: 0.0
+
 model:
-  decoder:
-    attention: bahdanau
-    attn_dim: 512
-    dropout: 0.3
-    embed_dim: 512
-    hidden_dim: 512
-    n_layers: 1
-    name: gru_attn
   encoder:
-    freeze: true
     name: vit_b16
     pretrained: true
+    freeze: true
     unfreeze_last_transformer_layers: 3
-run_name: s5_m2_vit_gru_bahdanau
+  decoder:
+    name: gru_attn
+    attention: bahdanau
+    embed_dim: 512
+    hidden_dim: 512
+    attn_dim: 512
+    n_layers: 1
+    dropout: 0.3
+
 training:
-  amp: true
   batch_size: 64
-  betas:
-  - 0.9
-  - 0.999
-  clip_norm: 5.0
-  early_stop_patience: false
-  encoder_lr_decay: 0.65
-  encoder_lr_scale: 0.1
   epochs: 20
-  label_smoothing: 0.1
-  lr: 0.0004
-  monitor: cider
   optimizer: adamw
+  lr: 4.0e-4
+  betas: [0.9, 0.999]
+  weight_decay: 1.0e-4
+  encoder_lr_scale: 0.1
+  encoder_lr_decay: 0.65
   scheduler: plateau
-  weight_decay: 0.0001
+  clip_norm: 5.0
+  label_smoothing: 0.1
+  amp: true
+  early_stop_patience: false
+  monitor: cider
+
+eval:
+  beam_size: 5
+  max_gen_len: 52
+  length_penalty: 1.0
+
+grpo:
+  enabled: true
+  epochs: 5
+  lr: 5.0e-5
+  weight_decay: 0.0
+  group_size: 5
+  clip_eps: 0.2
+  kl_beta: 0.04
+  clip_norm: 1.0
+  reward: cider
