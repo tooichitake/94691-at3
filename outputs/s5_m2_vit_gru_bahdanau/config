@@ -1,0 +1,49 @@
+data:
+  data_config: configs/data_config.yaml
+  transform_preset: imagenet_224_center
+eval:
+  beam_size: 5
+  length_penalty: 1.0
+  max_gen_len: 52
+grpo:
+  clip_eps: 0.2
+  clip_norm: 1.0
+  enabled: true
+  epochs: 5
+  group_size: 5
+  kl_beta: 0.04
+  lr: 5.0e-05
+  reward: cider
+  weight_decay: 0.0
+model:
+  decoder:
+    attention: bahdanau
+    attn_dim: 512
+    dropout: 0.3
+    embed_dim: 512
+    hidden_dim: 512
+    n_layers: 1
+    name: gru_attn
+  encoder:
+    freeze: true
+    name: vit_b16
+    pretrained: true
+    unfreeze_last_transformer_layers: 3
+run_name: s5_m2_vit_gru_bahdanau
+training:
+  amp: true
+  batch_size: 64
+  betas:
+  - 0.9
+  - 0.999
+  clip_norm: 5.0
+  early_stop_patience: false
+  encoder_lr_decay: 0.65
+  encoder_lr_scale: 0.1
+  epochs: 20
+  label_smoothing: 0.1
+  lr: 0.0004
+  monitor: cider
+  optimizer: adamw
+  scheduler: plateau
+  weight_decay: 0.0001
