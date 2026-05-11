@@ -9,6 +9,7 @@ Seaborn palettes used: ``colorblind`` (categorical), ``crest`` / ``flare``
 """
 from __future__ import annotations
 
+import math
 import textwrap
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, Mapping, Sequence
@@ -332,9 +333,11 @@ def plot_training_curves(run_dirs: Sequence[Path],
 
     crowded = len(dfs) > 4
     panel_w = 5.4 if not crowded else 5.0
-    panel_h = 4.2 if not crowded else 4.6
+    # Crowded: extra height reserved at the bottom for the multi-row figure
+    # legend so it never overlaps the x-axis tick labels above it.
+    panel_h = 4.2 if not crowded else 5.6
     fig, axes = plt.subplots(1, len(cols), figsize=(panel_w * len(cols), panel_h),
-                             sharex=True, constrained_layout=True)
+                             sharex=True, constrained_layout=False)
     axes = np.atleast_1d(axes)
 
     for ax, col, title in zip(axes, cols, titles):
@@ -355,12 +358,21 @@ def plot_training_curves(run_dirs: Sequence[Path],
             ax.set_yscale("log")
 
     if crowded:
+        # Reserve bottom space for the legend (turned off constrained_layout
+        # above so this is honoured exactly).
+        plt.subplots_adjust(left=0.06, right=0.99, top=0.92, bottom=0.30,
+                            wspace=0.22)
         handles, lbls = axes[0].get_legend_handles_labels()
-        ncol = min(len(lbls), 4)
+        # Cap ncol at 2 — run names like s5_m2_vit_gru_bahdanau are long, and
+        # 3+ columns force horizontal overlap once the cohort hits 10 runs.
+        ncol = min(len(lbls), 2)
         fig.legend(handles, lbls, loc="lower center",
-                   bbox_to_anchor=(0.5, -0.04 if ncol >= 4 else -0.06),
-                   ncol=ncol, fontsize=9, frameon=False)
+                   bbox_to_anchor=(0.5, 0.01),
+                   ncol=ncol, fontsize=8.5, frameon=False,
+                   columnspacing=3.0, handletextpad=0.6,
+                   labelspacing=0.6)
     else:
+        plt.tight_layout()
         for ax in axes:
             ax.legend(fontsize=8.5, loc="best")
     plt.show()
@@ -459,10 +471,13 @@ def plot_grpo_curves(run_dirs: Sequence[Path],
 
     if crowded:
         handles, lbls = ax_r.get_legend_handles_labels()
-        ncol = min(len(lbls), 4)
+        # Cap ncol at 3 — run names like s5_m2_vit_gru_bahdanau are long and
+        # collide horizontally at 4 columns once the cohort hits 10 runs.
+        ncol = min(len(lbls), 3)
         fig.legend(handles, lbls, loc="lower center",
-                   bbox_to_anchor=(0.5, -0.03),
-                   ncol=ncol, fontsize=9, frameon=False)
+                   bbox_to_anchor=(0.5, -0.08),
+                   ncol=ncol, fontsize=8, frameon=False,
+                   columnspacing=2.2, handletextpad=0.6)
     else:
         for ax in (ax_r, ax_v, ax_kl, ax_h):
             ax.legend(fontsize=8.5, loc="best")
@@ -786,8 +801,12 @@ def plot_metric_scatter(metric_dicts: Mapping[str, Mapping[str, float]],
                         annotate: bool = True) -> None:
     """Pareto-style scatter across runs: x vs y metric.
 
-    Colours by Phase (M1 vs M2 detected from name); runs of the same student share a shape.
-    Useful in § 6 Results to show "which models dominate on both BLEU-4 and CIDEr".
+    Encoding:
+      - Colour = phase / stage (M1 CE, M2 CE, GRPO) — see legend
+      - Shape  = student (one shape per student index)
+
+    The colour + shape encoding plus the legend in the lower right is enough
+    to identify each marker; no inline text labels are drawn.
 
     If ``metric_dicts`` contains paired CE / GRPO entries (same run with a
     ``" (CE)"`` / ``" (GRPO)"`` suffix), draws an arrow from CE → GRPO so the
@@ -798,9 +817,23 @@ def plot_metric_scatter(metric_dicts: Mapping[str, Mapping[str, float]],
     palette = sns.color_palette(_PALETTE)
     markers = ["o", "s", "D", "^", "v", "<", ">", "P", "X", "*"]
 
+    # Per-student arrow palette (colorblind-safe). Lets the reader trace a
+    # CE→GRPO transition inside a dense cluster: the arrow's colour matches
+    # the student key in the lower-right legend, while marker colour still
+    # encodes phase (M1 / M2 / GRPO).
+    student_indices: list[int] = []
+    for name in metric_dicts:
+        s = _student_idx(name)
+        if s not in student_indices:
+            student_indices.append(s)
+    student_indices.sort()
+    arrow_palette = sns.color_palette("colorblind", n_colors=max(5, len(student_indices)))
+    student_arrow_colour = {s: arrow_palette[i] for i, s in enumerate(student_indices)}
+
     fig, ax = plt.subplots(figsize=(8.0, 5.6))
 
     by_base: Dict[str, Dict[str, tuple]] = {}
+    base_to_name: Dict[str, str] = {}
     for name, m in metric_dicts.items():
         xi, yi = m.get(x), m.get(y)
         if xi is None or yi is None:
@@ -808,16 +841,19 @@ def plot_metric_scatter(metric_dicts: Mapping[str, Mapping[str, float]],
         bn = _base_run_name(name)
         stage = "grpo" if _is_grpo(name) else "ce"
         by_base.setdefault(bn, {})[stage] = (xi, yi)
+        base_to_name[bn] = name
 
     for bn, stages in by_base.items():
         if "ce" in stages and "grpo" in stages:
             (x0, y0), (x1, y1) = stages["ce"], stages["grpo"]
+            s = _student_idx(base_to_name[bn])
+            arrow_col = student_arrow_colour[s]
             ax.annotate("", xy=(x1, y1), xytext=(x0, y0),
-                        arrowprops=dict(arrowstyle="-|>", color="#7a7a7a",
-                                         linewidth=1.0, alpha=0.55,
-                                         shrinkA=4, shrinkB=4,
-                                         connectionstyle="arc3,rad=0.12"),
-                        zorder=1)
+                        arrowprops=dict(arrowstyle="-|>", color=arrow_col,
+                                         linewidth=1.2, alpha=0.75,
+                                         shrinkA=3, shrinkB=3,
+                                         connectionstyle="arc3,rad=0.14"),
+                        zorder=2)
 
     for name, m in metric_dicts.items():
         xi, yi = m.get(x), m.get(y)
@@ -827,36 +863,37 @@ def plot_metric_scatter(metric_dicts: Mapping[str, Mapping[str, float]],
         marker = markers[(s - 1) % len(markers)]
         if _is_grpo(name):
             color, edge = palette[3], "#444"
-            phase_label, size = "GRPO (Stage 2)", 55
+            phase_label, size = "GRPO (Stage 2)", 9
         elif _is_m2(name):
             color, edge = palette[2], "#222"
-            phase_label, size = "Phase 3 (M2 · CE)", 80
+            phase_label, size = "Phase 3 (M2 · CE)", 14
         else:
             color, edge = palette[0], "#444"
-            phase_label, size = "Phase 2 (M1 · CE)", 80
+            phase_label, size = "Phase 2 (M1 · CE)", 14
         ax.scatter(xi, yi, s=size, marker=marker, color=color, edgecolor=edge,
-                   linewidth=0.9, alpha=0.92, label=phase_label, zorder=3)
+                   linewidth=0.4, alpha=0.92, label=phase_label, zorder=3)
 
-    if annotate:
-        offset_by_student = {1: (7, 5), 2: (-9, -10), 3: (7, -10), 4: (-9, 5)}
-        for name, m in metric_dicts.items():
-            if _is_grpo(name):
-                continue
-            xi, yi = m.get(x), m.get(y)
-            if xi is None or yi is None:
-                continue
-            s = _student_idx(name)
-            ha = "left" if offset_by_student.get(s, (7, 5))[0] > 0 else "right"
-            va = "bottom" if offset_by_student.get(s, (7, 5))[1] > 0 else "top"
-            ax.annotate(_student_of(name) + ("·M2" if _is_m2(name) else "·M1"),
-                        (xi, yi), textcoords="offset points",
-                        xytext=offset_by_student.get(s, (7, 5)),
-                        ha=ha, va=va, fontsize=7.5, color="#222")
+    # Two legends, both lower-right: phase legend on top, student-arrow key
+    # underneath. Arrow colour identifies the student each CE→GRPO trajectory
+    # belongs to, useful inside the dense central cluster.
+    from matplotlib.lines import Line2D
+    phase_handles_seen, phase_lbls_seen = ax.get_legend_handles_labels()
+    unique_phase = dict(zip(phase_lbls_seen, phase_handles_seen))
+    leg_phase = ax.legend(unique_phase.values(), unique_phase.keys(),
+                          loc="lower right", title="Phase",
+                          fontsize=8, title_fontsize=8.5, framealpha=0.92)
+    ax.add_artist(leg_phase)
 
-    handles, lbls = ax.get_legend_handles_labels()
-    unique = dict(zip(lbls, handles))
-    ax.legend(unique.values(), unique.keys(), loc="lower right", title="",
-              fontsize=8.5, framealpha=0.92)
+    student_handles = [
+        Line2D([0], [0], color=student_arrow_colour[s], lw=2.2,
+               marker="", label=f"S{s}")
+        for s in student_indices
+    ]
+    ax.legend(handles=student_handles, loc="lower right",
+              bbox_to_anchor=(1.0, 0.27),
+              title="Student (arrow)", ncol=2,
+              fontsize=8, title_fontsize=8.5, framealpha=0.92,
+              handlelength=1.6, columnspacing=1.0, handletextpad=0.5)
 
     ax.set_xlabel(x.upper())
     ax.set_ylabel(y.upper())
